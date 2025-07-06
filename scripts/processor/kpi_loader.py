@@ -7,7 +7,7 @@ class TrafficKPILoader:
         self.df = None
         
     def _clean(self):
-        self.df = self.df[self.df["qualitaet"] >= 0.75]
+        # self.df = self.df[self.df["qualitaet"] >= 0.75]
         self.df["tag"] = pd.to_datetime(self.df["tag"], format="%d.%m.%Y")
         self.df["hour"] = self.df["stunde"]
         self.df.drop(columns=["stunde"], inplace=True)

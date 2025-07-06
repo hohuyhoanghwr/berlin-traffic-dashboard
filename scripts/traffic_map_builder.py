@@ -5,8 +5,6 @@ import folium
 from pyproj import Transformer
 import branca.colormap as cm
 
-
-
 class TrafficMapBuilder:
     def __init__(self, excel_path: str):
         self.excel_path = excel_path
@@ -20,15 +18,16 @@ class TrafficMapBuilder:
         df["lat"] = df["BREITE (WGS84)"]
         self.df_mq = df
 
-    def build_folium_map(self, zoom_start: int = 11, show_detectors: bool = False):
+    def build_folium_map(self, zoom_start: int = 11, center=None, show_detectors: bool = False):
         if self.df_mq is None:
             self.load_excel_metadata()
+        
+        if center is None:
+            lat_center = self.df_mq["lat"].mean()
+            lon_center = self.df_mq["lon"].mean()
+            center = [lat_center, lon_center]
 
-        # Center map on average location of all detectors
-        lat_center = self.df_mq["lat"].mean()
-        lon_center = self.df_mq["lon"].mean()
-
-        m = folium.Map(location=[lat_center, lon_center], zoom_start=zoom_start, tiles="CartoDB positron")
+        m = folium.Map(location=center, zoom_start=zoom_start, tiles="CartoDB positron")
 
         # Optional: plot detector points
         if show_detectors:
