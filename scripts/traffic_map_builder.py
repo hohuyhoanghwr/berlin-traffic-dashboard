@@ -56,21 +56,32 @@ class TrafficMapBuilder:
         min_val = gdf_road_kpi[value_col].min()
         max_val = gdf_road_kpi[value_col].max()
         colormap = cm.linear.YlOrRd_09.scale(min_val, max_val)
+        
+         # Add styling columns
+        gdf_road_kpi["color"] = gdf_road_kpi[value_col].apply(colormap)
+        gdf_road_kpi["tooltip_text"] = gdf_road_kpi.apply(
+            lambda row: f'{row.get("name_road_segment", "Unnamed Street")}<br>'
+            f'{value_col}: {row[value_col]:.0f}',
+            axis=1
+            )
 
-        def make_style(color):
-            return lambda feature: {
-                "color": color,
-                "weight": 5,
-                "opacity": 0.8
+        # Define style function for GeoJson
+        def style_function(feature):
+            return {
+            "color": feature["properties"]["color"],
+            "weight": 5,
+            "opacity": 0.8
             }
+            
+        # Define tooltip field
+        tooltip = folium.GeoJsonTooltip(fields=["tooltip_text"], aliases=[""])
 
-        for _, row in gdf_road_kpi.iterrows():
-            color = colormap(row[value_col])
-            folium.GeoJson(
-                data=row["geometry"].__geo_interface__,
-                style_function=make_style(color),
-                tooltip=f"{row.get('name_road_segment', 'Unnamed Street')}<br>{value_col}: {row[value_col]:.0f}"
-            ).add_to(self.folium_map)
+        # One big GeoJson
+        folium.GeoJson(
+        data=gdf_road_kpi.__geo_interface__,
+        style_function=style_function,
+        tooltip=tooltip
+        ).add_to(self.folium_map)
 
         colormap.caption = f"{value_col} scale"
         colormap.add_to(self.folium_map)
