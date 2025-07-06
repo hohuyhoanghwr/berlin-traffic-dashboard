@@ -1,0 +1,27 @@
+# OS & IDEs
+.DS_Store
+.vscode/
+.idea/
+
+# Notebooks
+*.ipynb
+notebooks/
+
+# Git & Python cache
+.git/
+__pycache__/
+*.py[cod]
+
+# Local data
+data/
+*.csv
+*.csv.gz
+*.parquet
+*.xlsx
+
+# Pip tools and envs
+*.env
+*.egg-info/
+requirements.in
+requirements.txt
+.cache/
