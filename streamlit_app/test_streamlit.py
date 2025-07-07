@@ -100,10 +100,10 @@ new_animation_speed = st.sidebar.slider(
 )
 
 # --- FIX: Update animation speed in session state and force rerun immediately ---
+# This ensures the new speed is always picked up on the first change.
 if new_animation_speed != st.session_state["animation_speed"]:
     st.session_state["animation_speed"] = new_animation_speed
     # If speed changes while playing, reset current index to start of range
-    # This ensures consistency and applies the new speed from a known point.
     if st.session_state["auto_playing"]:
         st.session_state["current_animation_index"] = st.session_state["animation_start_index"]
     st.rerun() # Force a rerun immediately to apply the new speed
@@ -163,7 +163,7 @@ def create_map_html(
         <style>
             body {{ margin: 0; padding: 0; font-family: 'Inter', sans-serif; }}
             #map {{ height: 500px; width: 100%; border-radius: 8px; }}
-            .map-controls {{ /* This div is still present but its children are hidden/repurposed */
+            .map-controls {{
                 position: absolute;
                 bottom: 10px;
                 left: 50%;
@@ -174,21 +174,19 @@ def create_map_html(
                 border-radius: 8px;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                 display: flex;
-                gap: 10px;
+                flex-direction: column; /* Arrange items vertically */
+                gap: 5px; /* Smaller gap between elements */
                 align-items: center;
                 width: calc(100% - 40px); /* Adjust width to fit */
                 max-width: 400px; /* Max width for better aesthetics */
                 box-sizing: border-box; /* Include padding in width */
             }}
-            .map-controls button {{
-                display: none; /* Hide map controls buttons as they are now in Streamlit sidebar */
-            }}
             .map-controls #timeDisplay {{
                 font-size: 1.1em;
                 font-weight: bold;
                 color: #333;
-                flex-grow: 1; /* Allow it to take available space */
                 text-align: center;
+                width: 100%; /* Take full width */
             }}
             /* Progress Bar Styles */
             .progress-container {{
@@ -196,7 +194,6 @@ def create_map_html(
                 background-color: #f3f3f3;
                 border-radius: 5px;
                 overflow: hidden;
-                margin-top: 5px; /* Space between time display and progress bar */
             }}
             .progress-bar {{
                 height: 10px;
@@ -258,11 +255,22 @@ def create_map_html(
             // Initialize map
             function initMap() {{
                 try {{
-                    map = L.map('map').setView([{initial_center[0]}, {initial_center[1]}], {initial_zoom});
+                    // Retrieve last known map view from localStorage if available
+                    const lastMapView = JSON.parse(localStorage.getItem('lastMapView')) || {{}};
+                    const initialCenterLat = lastMapView.center ? lastMapView.center.lat : {initial_center[0]};
+                    const initialCenterLng = lastMapView.center ? lastMapView.center.lng : {initial_center[1]};
+                    const initialZoom = lastMapView.zoom ? lastMapView.zoom : {initial_zoom};
+
+                    map = L.map('map').setView([initialCenterLat, initialCenterLng], initialZoom);
 
                     L.tileLayer('https://{{s}}.basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}.png', {{
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CartoDB</a>'
                     }}).addTo(map);
+
+                    // Save map view on moveend and zoomend
+                    map.on('moveend', saveMapView);
+                    map.on('zoomend', saveMapView);
+
 
                     // Initialize with the current index passed from Python
                     currentAnimationIndex = {initial_current_idx};
@@ -290,6 +298,15 @@ def create_map_html(
                 }} catch (e) {{
                     console.error("Error initializing map:", e);
                 }}
+            }}
+
+            // Function to save map view to localStorage
+            function saveMapView() {{
+                const view = {{
+                    center: map.getCenter(),
+                    zoom: map.getZoom()
+                }};
+                localStorage.setItem('lastMapView', JSON.stringify(view));
             }}
 
             // Color scale function
