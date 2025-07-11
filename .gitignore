@@ -4,12 +4,15 @@ __pycache__/
 *.egg-info/
 .env
 .env.*
+venv/
 
 # Jupyter
 .ipynb_checkpoints/
 
 # Streamlit
 .streamlit/secrets.toml
+src/streamlit_app/.cache/
+src/streamlit_app/data/
 
 # OS & IDEs
 .DS_Store
@@ -18,17 +21,21 @@ Thumbs.db
 .idea/
 
 # Pip tools
-requirements.txt
+# requirements.txt
+requirements.in
 
 # Data
-data/raw/
-.xlsx
+# data/raw/
+src/data/raw/2024/*.gz      
+src/data/raw/2024/*.csv     
+src/data/road_kpi_snapshots/
+src/data/osm/berlin_drive.graphml
+src/data/raw/*.xlsx
 data/processed/
-*.csv
-*.csv.gz
 *.parquet
 *.xlsx
-road_kpi_snapshots/
+*.csv
+
 
 # Logs / caches
 *.log
@@ -36,3 +43,7 @@ road_kpi_snapshots/
 *.db
 .cache/
 test/cache/
+
+# Docker specific
+*.dockerignore
+Dockerfile.bak
