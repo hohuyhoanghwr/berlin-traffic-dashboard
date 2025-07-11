@@ -28,7 +28,7 @@ data/processed/
 *.csv.gz
 *.parquet
 *.xlsx
-data/road_kpi_snapshots/
+road_kpi_snapshots/
 
 # Logs / caches
 *.log
