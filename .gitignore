@@ -30,6 +30,7 @@ data/processed/
 *.xlsx
 data/road_kpi_snapshots/
 src/data/road_kpi_snapshots/
+scripts/cache/
 
 # Logs / caches
 *.log
