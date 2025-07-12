@@ -8,3 +8,7 @@ geopandas
 ipykernel
 osmnx
 geopandas
+tqdm
+psycopg2-binary
+python-dotenv
+sqlalchemy
