@@ -8,6 +8,7 @@ import os
 import sys
 import time # For potential sleep in rerun loop
 from datetime import date, timedelta # For date range validation
+import branca.colormap as cm # Import branca for colormaps
 
 # Add the project root to the sys.path to allow imports from utils
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -148,20 +149,57 @@ def fetch_all_kpi_snapshots(
     _road_segments_gdf: gpd.GeoDataFrame, # Renamed to _road_segments_gdf to prevent hashing
     available_timestamps_in_range: list[pd.Timestamp],
     kpi_type: str,
-    vehicle_type: str
+    vehicle_type: str,
+    kpi_display_name: str # Pass display name to determine color scale
 ) -> dict:
     """
     Fetches KPI data for all available timestamps within the given range and merges with road segments,
     then converts to a dictionary of GeoJSON objects for client-side animation.
+    Pre-calculates colors in Python.
     """
     all_geojson_data = {}
     total_timestamps = len(available_timestamps_in_range)
     
     _road_segments_gdf['segment_id'] = _road_segments_gdf['segment_id'].astype(int)
 
+    # Determine color scale based on KPI type
+    if kpi_type == "vehicle_count":
+        # Define specific thresholds and colors for vehicle count
+        # These are more distinct than the previous ones and cover a wider range
+        bins = [0, 10, 20, 50, 100, 200, 500, 1000, 2000] # Added a higher bin for very high traffic
+        colors = ['#66BD63', '#A6D96A', '#D9EF8B', '#FEE08B', '#FDAE61', '#F46D43', '#D73027', '#A50026'] # Green to Red
+        colormap = cm.StepColormap(colors, vmin=min(bins), vmax=max(bins), index=bins)
+        legend_ranges = [
+            {'value': '2000+', 'color': '#A50026'},
+            {'value': '1001-2000', 'color': '#D73027'},
+            {'value': '501-1000', 'color': '#F46D43'},
+            {'value': '201-500', 'color': '#FDAE61'},
+            {'value': '101-200', 'color': '#FEE08B'},
+            {'value': '51-100', 'color': '#D9EF8B'},
+            {'value': '21-50', 'color': '#A6D96A'},
+            {'value': '0-20', 'color': '#66BD63'}
+        ]
+    elif kpi_type == "average_speed":
+        # Define specific thresholds and colors for average speed
+        bins = [0, 10, 20, 30, 40, 50, 60, 70] # Speeds in km/h
+        colors = ['#D73027', '#F46D43', '#FDAE61', '#FEE08B', '#D9EF8B', '#A6D96A', '#66BD63'] # Red (slow) to Green (fast)
+        colormap = cm.StepColormap(colors, vmin=min(bins), vmax=max(bins), index=bins)
+        legend_ranges = [
+            {'value': '70+ km/h', 'color': '#66BD63'},
+            {'value': '61-70 km/h', 'color': '#A6D96A'},
+            {'value': '51-60 km/h', 'color': '#D9EF8B'},
+            {'value': '41-50 km/h', 'color': '#FEE08B'},
+            {'value': '31-40 km/h', 'color': '#FDAE61'},
+            {'value': '21-30 km/h', 'color': '#F46D43'},
+            {'value': '1-20 km/h', 'color': '#D73027'},
+            {'value': '0 km/h', 'color': '#A50026'} # Very dark red for zero speed
+        ]
+    else:
+        # Default to a simple grayscale or single color if KPI type is unknown
+        colormap = cm.StepColormap(['#808080'], vmin=0, vmax=1)
+        legend_ranges = [{'value': 'N/A', 'color': '#808080'}]
+
     for i, ts in enumerate(available_timestamps_in_range):
-        # Removed st.sidebar.progress to avoid showing it
-        
         kpi_df_single_ts = fetch_kpi_data(
             segment_ids=_road_segments_gdf['segment_id'].tolist(),
             selected_date=ts,
@@ -177,42 +215,35 @@ def fetch_all_kpi_snapshots(
         current_map_data_gdf['kpi_value'] = current_map_data_gdf['kpi_value'].fillna(0)
         current_map_data_gdf['kpi_value'] = current_map_data_gdf['kpi_value'].astype(float)
 
-        # DEBUG: Check data after merge and fillna
-        # print(f"DEBUG (Python): Data for {ts} after merge and fillna:")
-        # print(current_map_data_gdf[['segment_id', 'kpi_value', 'tooltip_content']].head())
-        # print(f"DEBUG (Python): kpi_value dtypes after fillna and astype: {current_map_data_gdf['kpi_value'].dtype}")
-        # print(f"DEBUG (Python): Sample kpi_values: {current_map_data_gdf['kpi_value'].sample(min(5, len(current_map_data_gdf))).tolist()}")
-
+        # Pre-calculate color in Python
+        current_map_data_gdf['display_color'] = current_map_data_gdf['kpi_value'].apply(lambda c: colormap(c)[:7])
+        
+        # DEBUG: Check data after merge and color calculation
+        # print(f"DEBUG (Python): Data for {ts} after merge and color calculation:")
+        # print(current_map_data_gdf[['segment_id', 'kpi_value', 'display_color', 'tooltip_content']].head())
 
         if not current_map_data_gdf.geometry.name == 'geometry':
             current_map_data_gdf = current_map_data_gdf.set_geometry('geometry')
 
         current_map_data_gdf['tooltip_content'] = current_map_data_gdf.apply(
-            lambda row: f"<b>Road:</b> {row['name_road_segment']}<br><b>{selected_kpi_display}:</b> {row['kpi_value']:.2f}",
+            lambda row: f"<b>Road:</b> {row['name_road_segment']}<br><b>{kpi_display_name}:</b> {row['kpi_value']:.2f}",
             axis=1
         )
         
         geojson_dict = json.loads(current_map_data_gdf.to_json())
         
-        # Ensure kpi_value is explicitly set in properties for JS to use
+        # Ensure kpi_value and display_color are explicitly set in properties for JS to use
         for feature in geojson_dict['features']:
             segment_id = feature['properties']['segment_id']
-            # Find the corresponding row in the DataFrame to get the correct kpi_value
-            # Use .loc for more robust indexing and to avoid SettingWithCopyWarning
             original_row = current_map_data_gdf.loc[current_map_data_gdf['segment_id'] == segment_id].iloc[0]
             feature['properties']['kpi_value'] = original_row['kpi_value']
             feature['properties']['tooltip_content'] = original_row['tooltip_content']
+            feature['properties']['display_color'] = str(original_row['display_color']) # Add pre-calculated color
         
-        # DEBUG: Check GeoJSON structure before sending to JS
-        # print(f"DEBUG (Python): Sample GeoJSON feature properties for {ts}:")
-        # if geojson_dict['features']:
-        #     print(geojson_dict['features'][0]['properties']) # Print first feature's properties
-        #     if len(geojson_dict['features']) > 1:
-        #         print(geojson_dict['features'][min(1, len(geojson_dict['features']) - 1)]['properties']) # Print second feature's properties if available
-
-
         all_geojson_data[ts.strftime("%Y-%m-%d %H:%M:%S")] = geojson_dict
-        
+    
+    # Store legend ranges in the returned data for JS to use
+    all_geojson_data['legend_ranges'] = legend_ranges
     return all_geojson_data
 
 
@@ -230,12 +261,17 @@ elif "load_triggered" not in st.session_state:
 
 # Only proceed with data loading and map rendering if "Load Map" was triggered
 if st.session_state["load_triggered"]:
-    all_geojson_data = fetch_all_kpi_snapshots(
+    all_geojson_data_with_legend = fetch_all_kpi_snapshots(
         _road_segments_gdf=road_segments_gdf,
         available_timestamps_in_range=filtered_timestamps,
         kpi_type=selected_kpi_type,
-        vehicle_type=selected_vehicle_type
+        vehicle_type=selected_vehicle_type,
+        kpi_display_name=selected_kpi_display
     )
+    # Extract actual GeoJSON data and legend ranges
+    legend_ranges_for_js = all_geojson_data_with_legend.pop('legend_ranges')
+    all_geojson_data = all_geojson_data_with_legend
+
 
     available_times_str = sorted(list(all_geojson_data.keys()))
     if not available_times_str:
@@ -262,76 +298,18 @@ if st.session_state["load_triggered"]:
         initial_zoom: int = 12,
         initial_center: list = [52.52, 13.405],
         auto_play_on_load: bool = False,
-        selected_kpi_type: str = "vehicle_count",
-        kpi_display_name: str = "KPI Value" # Pass display name for legend
+        kpi_display_name: str = "KPI Value", # Pass display name for legend
+        legend_ranges_data: list = [] # Pass legend ranges directly
     ) -> str:
         geojson_json_str = json.dumps(geojson_data_all_times)
         times_json_str = json.dumps(available_times_list)
+        legend_ranges_json_str = json.dumps(legend_ranges_data) # New: pass legend ranges as JSON
 
-        color_scale_js = ""
-        if selected_kpi_type == "vehicle_count":
-            color_scale_js = """
-            function getColor(value) {
-                // console.log("JS getColor (vehicle_count): value =", value); // Debugging inside getColor
-                return value > 1000 ? '#A50026' : // Dark Red
-                       value > 500  ? '#D73027' : // Red
-                       value > 200  ? '#F46D43' : // Orange-Red
-                       value > 100  ? '#FDAE61' : // Orange
-                       value > 50   ? '#FEE08B' : // Light Orange
-                       value > 20   ? '#D9EF8B' : // Yellow-Green
-                       value > 10   ? '#A6D96A' : // Light Green
-                                      '#66BD63'; // Dark Green (for lowest values)
-            }
-            """
-        elif selected_kpi_type == "average_speed":
-            color_scale_js = """
-            function getColor(value) {
-                // console.log("JS getColor (average_speed): value =", value); // Debugging inside getColor
-                return value > 60 ? '#1A9850' : // Dark Green (fast)
-                       value > 50 ? '#66BD63' : // Green
-                       value > 40 ? '#A6D96A' : // Light Green
-                       value > 30 ? '#D9EF8B' : // Yellow-Green
-                       value > 20 ? '#FEE08B' : // Light Orange
-                       value > 10 ? '#FDAE61' : // Orange
-                       value > 0  ? '#F46D43' : // Orange-Red
-                                    '#D73027'; // Red (for 0 or very low speed)
-            }
-            """
-        else:
-            color_scale_js = """
-            function getColor(value) {
-                // console.log("JS getColor (default): value =", value); // Debugging inside getColor
-                return '#808080'; // Default to grey if KPI type is unknown
-            }
-            """
+        # No need for getColor function in JS anymore, as color is pre-calculated
+        color_scale_js = "" 
 
-        legend_ranges_js = ""
-        if selected_kpi_type == "vehicle_count":
-            legend_ranges_js = """
-            const legendRanges = [
-                { value: '1000+', color: '#A50026' },
-                { value: '501-1000', color: '#D73027' },
-                { value: '201-500', color: '#F46D43' },
-                { value: '101-200', color: '#FDAE61' },
-                { value: '51-100', color: '#FEE08B' },
-                { value: '21-50', color: '#D9EF8B' },
-                { value: '11-20', color: '#A6D96A' },
-                { value: '0-10', color: '#66BD63' }
-            ];
-            """
-        elif selected_kpi_type == "average_speed":
-            legend_ranges_js = """
-            const legendRanges = [
-                { value: '60+ km/h', color: '#1A9850' },
-                { value: '51-60 km/h', color: '#66BD63' },
-                { value: '41-50 km/h', color: '#A6D96A' },
-                { value: '31-40 km/h', color: '#D9EF8B' },
-                { value: '21-30 km/h', color: '#FEE08B' },
-                { value: '11-20 km/h', color: '#FDAE61' },
-                { value: '1-10 km/h', color: '#F46D43' },
-                { value: '0 km/h', color: '#D73027' }
-            ];
-            """
+        # Legend ranges are now passed directly from Python
+        legend_ranges_js = f"const legendRanges = {legend_ranges_json_str};"
         
         # DEBUG: Print current map_html_key to Python console
         # print(f"DEBUG (Python): Generating HTML with map_html_key for selected_kpi_type: {selected_kpi_type}")
@@ -461,21 +439,22 @@ if st.session_state["load_triggered"]:
                     }}
                 }}
 
-                // Color scale functions (injected from Python)
-                {color_scale_js}
+                // Color scale functions (injected from Python) - NOW REDUNDANT, COLOR IS IN GEOJSON
+                // {color_scale_js} // REMOVED
 
                 // Legend ranges (injected from Python)
                 {legend_ranges_js}
 
-                // Style function for GeoJSON features
+                // Style function for GeoJSON features - NOW USES PRE-CALCULATED COLOR
                 function styleFeature(feature) {{
-                    const value = feature.properties.kpi_value;
+                    const color = feature.properties.display_color; // Use pre-calculated color
                     // DEBUG: Check KPI value and color being applied
-                    console.log("JS Style: feature segment_id:", feature.properties.segment_id, "KPI value:", value, "Calculated Color:", getColor(value)); 
+                    console.log("JS Style: feature segment_id:", feature.properties.segment_id, "KPI value:", feature.properties.kpi_value, "Pre-calculated Color:", color); 
                     return {{
-                        color: getColor(value),
+                        color: color, // Use the pre-calculated color
                         weight: 6, // Increased weight for better visibility
                         opacity: 0.9, // Increased opacity for better visibility
+                        fill: false
                     }};
                 }}
 
@@ -701,8 +680,8 @@ if st.session_state["load_triggered"]:
         speed=st.session_state["animation_speed"],
         initial_current_idx=st.session_state["current_animation_index"],
         auto_play_on_load=auto_play_on_load_flag,
-        selected_kpi_type=selected_kpi_type,
-        kpi_display_name=selected_kpi_display # Pass the display name for the legend
+        kpi_display_name=selected_kpi_display, # Pass the display name for the legend
+        legend_ranges_data=legend_ranges_for_js # Pass the legend ranges to JS
     )
 
     st.markdown("### 📍 Animated Traffic Map")
