@@ -5,9 +5,9 @@ import os
 import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DATA_PATH = os.path.join(ROOT_DIR, "data", "processed", "kpi_enriched_dec_2024.parquet")
-SNAPSHOT_DIR = os.path.join(ROOT_DIR, "data", "road_kpi_snapshots")
-MAP_PATH = os.path.join(ROOT_DIR, "data", "raw", "Stammdaten_Verkehrsdetektion_2022_07_20.xlsx")
+DATA_PATH = os.path.join(ROOT_DIR,"src","data", "processed", "kpi_enriched_dec_2024.parquet")
+SNAPSHOT_DIR = os.path.join(ROOT_DIR, "src","data", "road_kpi_snapshots")
+MAP_PATH = os.path.join(ROOT_DIR, "src","data", "raw", "Stammdaten_Verkehrsdetektion_2022_07_20.xlsx")
 
 import streamlit as st
 import pandas as pd
