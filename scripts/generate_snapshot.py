@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import sys
-from processor.osm_matcher_2 import StreetMatcher
+from processor.osm_matcher import StreetMatcher
 from pymongo import MongoClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -109,6 +109,15 @@ for ts_str in unique_times:
             }
             # Insert into MongoDB
             try:
+                existing = collection.find_one({
+                    "timestamp": ts_str,
+                    "vehicle_type": vehicle_type,
+                    "kpi_type": kpi_type
+                })
+                if existing:
+                    print(f"Skipping existing snapshot for {ts_str} | {vehicle_type} | {kpi_type}")
+                    continue
+                
                 collection.insert_one(snapshot_document)
                 print(f"Inserted snapshot for: {ts_str} | Vehicle: {vehicle_type} | KPI: {kpi_type}")
                 print("---------------------------------")
