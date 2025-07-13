@@ -11,11 +11,6 @@ RUN pip install -r requirements.txt
 # Copy everything into the container
 COPY streamlit_app/ /app/
 
-# Streamlit server settings
-# ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-# ENV STREAMLIT_SERVER_PORT=8000
-# ENV STREAMLIT_SERVER_ENABLECORS=false
-
 # MongoDB environment variables
 ENV MONGO_URI=${MONGO_URI}
 ENV MONGO_DB_NAME=${MONGO_DB_NAME}
