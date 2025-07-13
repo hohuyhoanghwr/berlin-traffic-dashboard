@@ -153,17 +153,19 @@ if selected_kpi_type_internal != st.session_state["selected_kpi_type"]:
     st.rerun() # Rerun to load new data
 
 # Get selected date and hour objects
-start_col1, start_col2 = st.sidebar.columns([2, 1])
-with start_col1:
-    selected_start_date = st.sidebar.date_input("Start Date", value=min(unique_dates), min_value=min(unique_dates), max_value=max(unique_dates), key="start_date_picker")
-with start_col2:
-    selected_start_hour = st.sidebar.selectbox("Start Hour", options=unique_hours, index=0, key="start_hour_selector")
+with st.sidebar:
+    start_col1, start_col2 = st.columns(2)
+    with start_col1:
+        selected_start_date = st.sidebar.date_input("Start Date", value=min(unique_dates), min_value=min(unique_dates), max_value=max(unique_dates), key="start_date_picker")
+    with start_col2:
+        selected_start_hour = st.sidebar.selectbox("Start Hour", options=unique_hours, index=0, key="start_hour_selector")
 
-end_col1, end_col2 = st.sidebar.columns([2, 1])
-with end_col1:
-    selected_end_date = st.sidebar.date_input("End Date", value=max(unique_dates), min_value=min(unique_dates), max_value=max(unique_dates), key="end_date_picker")
-with end_col2:
-    selected_end_hour = st.sidebar.selectbox("End Hour", options=unique_hours, index=len(unique_hours)-1, key="end_hour_selector")
+with st.sidebar:
+    end_col1, end_col2 = st.columns(2)
+    with end_col1:
+        selected_end_date = st.sidebar.date_input("End Date", value=max(unique_dates), min_value=min(unique_dates), max_value=max(unique_dates), key="end_date_picker")
+    with end_col2:
+        selected_end_hour = st.sidebar.selectbox("End Hour", options=unique_hours, index=len(unique_hours)-1, key="end_hour_selector")
 
 # Reconstruct the timestamp strings in the same format as 'unique_times'
 start_datetime_obj = datetime.datetime.combine(selected_start_date, datetime.datetime.min.time().replace(hour=selected_start_hour))
