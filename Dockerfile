@@ -1,13 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy everything into the container
-COPY streamlit_app/ /app/
+COPY app/requirements.txt requirements.txt
 
 # Install dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install -r requirements.txt
+
+# Copy everything into the container
+COPY streamlit_app/ /app/
 
 # Streamlit server settings
 # ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
@@ -23,4 +25,4 @@ ENV MONGO_COLLECTION_NAME=${MONGO_COLLECTION_NAME}
 EXPOSE 8505
 
 # Run Streamlit with correct entry path
-CMD ["streamlit", "run", "Home.py", "--server.address=0.0.0.0", "--server.port=8505"]
+CMD ["streamlit", "run", "Home.py", "--server.address=0.0.0.0", "--server.port=8505","--server.runOnSave=true"]
