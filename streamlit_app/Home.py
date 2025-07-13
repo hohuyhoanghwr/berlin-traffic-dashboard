@@ -11,7 +11,7 @@ import time
 from pymongo import MongoClient # Import MongoClient
 import datetime
 
-# --- MongoDB Configuration (Matching generate_snapshot.py) ---
+# --- MongoDB Configuration ---
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 DB_NAME = os.getenv("MONGO_DB_NAME", "traffic_dashboard")
 COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME", "road_kpi_snapshots")
