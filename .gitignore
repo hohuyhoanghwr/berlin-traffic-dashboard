@@ -17,8 +17,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Pip tools
-requirements.txt
 
 # Data
 data/raw/
