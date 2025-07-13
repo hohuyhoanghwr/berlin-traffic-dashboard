@@ -9,3 +9,4 @@ ipykernel
 osmnx
 geopandas
 pymongo
+ipython<8.20
