@@ -3,7 +3,7 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
-COPY app/requirements.txt requirements.txt
+COPY streamlit_app/requirements.txt requirements.txt
 
 # Install dependencies
 RUN pip install -r requirements.txt
