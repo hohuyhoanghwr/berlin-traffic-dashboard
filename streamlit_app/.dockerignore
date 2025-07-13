@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb
+test/
+.cache/
+data/
+.vscode/
+*.json
+*.gz
+*.parquet
+*.xlsx
+*.graphml

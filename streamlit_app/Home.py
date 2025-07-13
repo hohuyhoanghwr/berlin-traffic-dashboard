@@ -1,13 +1,7 @@
 # streamlit_app/Home.py
 
-import sys
 import os
 import json
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-DATA_PATH = os.path.join(ROOT_DIR,"src","data", "processed", "kpi_enriched_dec_2024.parquet")
-MAP_PATH = os.path.join(ROOT_DIR, "src","data", "raw", "Stammdaten_Verkehrsdetektion_2022_07_20.xlsx")
 
 import streamlit as st
 import pandas as pd
@@ -25,24 +19,25 @@ COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME", "road_kpi_snapshots")
 # UI setup
 st.set_page_config(page_title="Berlin Traffic Map", layout="wide")
 st.title("🛣️ Berlin Traffic Detector Map")
+    
+with st.spinner("🔄 Loading available timeframes from MongoDB..."):
+    try:
+        client = MongoClient(MONGO_URI)
+        collection = client[DB_NAME][COLLECTION_NAME]
 
-# --- Data Loading and Pre-processing ---
-# Loads the initial dataframe to get unique times
-@st.cache_data(show_spinner="Loading initial data...")
-def load_initial_data(path: str) -> pd.DataFrame:
-    df = pd.read_parquet(path)
-    if not pd.api.types.is_datetime64_any_dtype(df['tag']):
-        df['tag'] = pd.to_datetime(df['tag'])
+        # Fetch all distinct timestamps
+        all_timestamps = collection.distinct("timestamp")
+        df_timestamps = pd.to_datetime(all_timestamps)
 
-    # Ensure this timestamp column matches the one used in generate_snapshot.py
-    df["timestamp_str"] = df["tag"].dt.strftime("%Y-%m-%d") + " " + df["hour"].astype(str).str.zfill(2) + ":00"
-    return df
+        # Generate derived time lists
+        unique_times = sorted(pd.Series(df_timestamps).dt.strftime("%Y-%m-%d %H:00").unique())
+        unique_dates = sorted(pd.Series(df_timestamps).dt.date.unique())
+        unique_hours = sorted(pd.Series(df_timestamps).dt.hour.unique())
 
-with st.spinner("Loading initial data and available timeframes..."): # Explicit spinner for initial load
-    df_initial = load_initial_data(DATA_PATH)
-    unique_times = sorted(df_initial["timestamp_str"].unique()) # Ensure times are sorted
-    unique_dates = sorted(df_initial["tag"].dt.date.unique())
-    unique_hours = sorted(df_initial["hour"].unique())
+        client.close()
+    except Exception as e:
+        st.error(f"❌ Failed to load time data from MongoDB: {e}")
+        st.stop()
 
 # --- MongoDB Data Loading Function ---
 @st.cache_data(show_spinner="Fetching map data from database...") # Spinner for database fetch
