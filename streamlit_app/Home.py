@@ -41,7 +41,6 @@ with st.spinner("🔄 Loading available timeframes from MongoDB..."):
         st.stop()
 
 # --- MongoDB Data Loading Function ---
-@st.cache_data(show_spinner="Fetching map data from database...") # Spinner for database fetch
 def load_snapshots_from_mongodb(mongo_uri: str, db_name: str, collection_name: str,
                                  selected_vehicle_type: str, selected_kpi_type: str,
                                  time_range_times: list) -> dict:
