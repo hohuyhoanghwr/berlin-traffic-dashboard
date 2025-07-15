@@ -16,21 +16,6 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
-
-
-# Data
-data/raw/
-.xlsx
-data/processed/
-*.csv
-*.csv.gz
-*.parquet
-*.xlsx
-scripts/cache/
-# scr/
-# scripts/
-data/
-test/
 .venv/
 
 # Logs / caches
@@ -39,3 +24,4 @@ test/
 *.db
 .cache/
 test/cache/
+scripts/cache/
