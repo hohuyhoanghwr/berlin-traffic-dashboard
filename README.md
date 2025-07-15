@@ -6,7 +6,7 @@
 ---
 
 ## 🚦 Project Overview  
-BerliFlow bridges the gap between Berlin’s fragmented traffic data sources and the need for actionable, accessible urban mobility insights. By integrating Berlin’s traffic APIs, OpenStreetMap geodata, and modern big data principles, we provide a user-friendly dashboard that transforms complex traffic data into meaningful visualizations.
+BerliFlow bridges the gap between Berlin’s fragmented traffic data sources and the need for actionable, accessible urban mobility insights. By integrating Berlin’s open-source traffic measurements, OpenStreetMap geodata, and a lightweight Streamlit app, we provide a user-friendly dashboard that transforms complex traffic data into meaningful visualizations.
 
 **Key Technologies:**  
 - **MongoDB** (optimized for JSON / GeoJSON and geospatial queries)  
@@ -25,7 +25,7 @@ Berlin’s traffic data exists but is fragmented across city departments, publis
 - **Decision-Making Gaps:** Urban planners and officials lack consolidated, actionable insights.
 
 **Our Solution:**  
-A unified platform offering real-time and historical traffic data visualization, enabling insights through interactive, map-based filtering and temporal exploration.
+A unified platform offering historical traffic data visualization, enabling insights through interactive, map-based filtering and temporal exploration.
 
 ---
 
@@ -42,17 +42,17 @@ A unified platform offering real-time and historical traffic data visualization,
 
 ## 🧰 Technology Stack  
 
-| **Component** | **Technology**    | **Purpose**                         |
-|---------------|-------------------|-------------------------------------|
+|**Component**  |**Technology**      | **Purpose**                         |
+|---------------|--------------------|-------------------------------------|
 | Backend       | Python             | Data integration, processing, APIs  |
 | Database      | MongoDB            | JSON & GeoJSON, flexible geospatial data |
 | Frontend      | Streamlit          | Interactive dashboards & filtering  |
-| Geodata       | OpenStreetMap      | Base maps, district-level geometry  |
-| APIs          | Berlin Traffic     | Real-time sensor & historical traffic |
+| Map geodata   | OpenStreetMap API  | Base maps, district-level geometry  |
 | Cloud         | CapRover / Docker  | Containerized deployment            |
 
 **Why MongoDB?**  
-Our data is JSON-based with heavy geospatial components (GeoJSON). MongoDB’s flexibility, spatial indexing, and document model far surpass relational alternatives for our needs.
+Our data is JSON-based with heavy geospatial components (GeoJSON). The key advantage of MongoDB’s for our use case is its 2dsphere, which directly works with Berlin's data having spherical (Earth-like) coordinates (WGS84).
+With PostGIS (extension of PostgreSQL), we would need to perform additional work of casting to geography type via SRID 4326, which also contains some probable risk of data precision within the transformation pipeline. 
 
 ---
 
@@ -61,7 +61,7 @@ Our data is JSON-based with heavy geospatial components (GeoJSON). MongoDB’s f
 **Data Origin:**  
 - **Berlin Traffic Detection API** (Sensors: cars, trucks, speed, hourly granularity): https://api.viz.berlin.de/daten/verkehrsdetektion
 - **OpenStreetMap** (Road network, districts)
-  ```python
+```python
 def load_osm_network(self):
     if os.path.exists(self.cache_path):
         print("📂 Loading cached Berlin road network...")
@@ -89,7 +89,7 @@ def load_osm_network(self):
 ## 📊 Key Features & User Interaction  
 
 ### **For Citizens:**  
-- Real-time route condition awareness  
+- Intuitive visualization of traffic conditions in interested route
 - Historical data reveals optimal travel times  
 
 ### **For Urban Planners:**  
@@ -104,11 +104,11 @@ def load_osm_network(self):
 - **Dynamic Maps:** Color-coded traffic density (green → red)  
 - **Filters:** Date range, vehicle type, KPI type  
 - **Animation:** Explore temporal changes visually  
-- **Sub-Second Queries:** Thanks to MongoDB’s geospatial indexing  
+- **Sub-Second Queries:** Thanks to MongoDB’s 2dsphere index - directly applies to geodadata with spherical (Earth-like) coordinates (WGS84) - which is our case
 
 ---
 
-## 🚀 Implementation & Deployment  
+## 🚀 Implementation & Deployment
 
 **Cloud-Native Architecture:**  
 - Containerized via CapRover  
@@ -142,3 +142,13 @@ def load_osm_network(self):
 - Mobile app for commuters  
 - 3D visualization integrating buildings & infrastructure  
 - Public API for external integrations  
+
+---
+
+## Team Contribution
+|**Task**                                    |**Member in charge**|
+|--------------------------------------------|--------------------|
+| Data extraction, processing & enrichment   | Gökan Görer + Huy-Hoang Ho|
+| Map buiding                                | Huy-Hoang Ho|
+| Cloud deployment - Database & App          | Onat Arzoglu + Huy-Hoang Ho|
+| Presentation & Documentation               | All members|
