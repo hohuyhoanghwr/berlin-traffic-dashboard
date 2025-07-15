@@ -76,7 +76,11 @@ def load_osm_network(self):
 1. **Collect:** APIs deliver raw JSON data.  
 2. **Enrich:** Merge traffic data with geographic road network.  
 3. **Transform:** Convert to GeoJSON for MongoDB ingestion.  
-4. **Serve:** Backend queries serve frontend requests.  
+4. **Serve:** Backend queries serve frontend requests.
+
+**Project folder structure:**  
+<img width="349" height="727" alt="image" src="https://github.com/user-attachments/assets/b3ef3e24-31a2-47f4-b551-0ec46a7b764f" />
+
 
 **Key Metrics (KPIs):**  
 - Vehicle counts by type (cars, trucks)  
@@ -117,6 +121,7 @@ def load_osm_network(self):
 
 **Demo:**  
 [https://berlin-traffic-dashboard.huyhoangho.online](https://berlin-traffic-dashboard.huyhoangho.online)
+
 
 ---
 
