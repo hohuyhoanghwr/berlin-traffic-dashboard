@@ -59,8 +59,18 @@ Our data is JSON-based with heavy geospatial components (GeoJSON). MongoDB’s f
 ## 🛣️ Data Sources & Structure  
 
 **Data Origin:**  
-- **Berlin Traffic Detection API** (Sensors: cars, trucks, speed, hourly granularity)  
-- **OpenStreetMap** (Road network, districts)  
+- **Berlin Traffic Detection API** (Sensors: cars, trucks, speed, hourly granularity): https://api.viz.berlin.de/daten/verkehrsdetektion
+- **OpenStreetMap** (Road network, districts)
+  ```python
+def load_osm_network(self):
+    if os.path.exists(self.cache_path):
+        print("📂 Loading cached Berlin road network...")
+        G = ox.load_graphml(self.cache_path)
+    else:
+        print("🌐 Downloading Berlin road network from OpenStreetMap...")
+        G = ox.graph_from_place(self.network_place, network_type='drive')
+        ox.save_graphml(G, filepath=self.cache_path)
+```
 
 **Data Pipeline:**  
 1. **Collect:** APIs deliver raw JSON data.  
@@ -114,7 +124,7 @@ Our data is JSON-based with heavy geospatial components (GeoJSON). MongoDB’s f
 
 **Achievements:**  
 - Made complex data accessible to non-technical users  
-- Real-time & historical insights delivered interactively  
+- Historical insights delivered interactively  
 - Robust system handling Berlin-wide data with responsive performance  
 
 **Stakeholder Benefits:**  
@@ -126,7 +136,9 @@ Our data is JSON-based with heavy geospatial components (GeoJSON). MongoDB’s f
 
 ## 🔮 Future Roadmap  
 - Congestion prediction through machine learning  
-- Expand coverage to Brandenburg  
+- Expand coverage to Brandenburg
+- Expand data coverage to cover further time range
+- Develop detailed dashboards to deliver district- and street-level insights
 - Mobile app for commuters  
 - 3D visualization integrating buildings & infrastructure  
 - Public API for external integrations  
