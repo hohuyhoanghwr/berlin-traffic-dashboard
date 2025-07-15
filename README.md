@@ -32,10 +32,11 @@ A unified platform offering real-time and historical traffic data visualization,
 ## 🏗️ System Architecture  
 
 ### **Context Diagram**  
-![Context Diagram](assets/contextdiagram.png)
+<img width="716" height="832" alt="image" src="https://github.com/user-attachments/assets/eecc678a-ce03-4b07-be18-b8e56d3c66ed" />
 
 ### **Container Diagram**  
-![Container Diagram](assets/containerdiagram.png)
+<img width="1296" height="822" alt="image" src="https://github.com/user-attachments/assets/ff65b707-f31c-4b6d-878e-72a71fd40ec3" />
+
 
 ---
 
