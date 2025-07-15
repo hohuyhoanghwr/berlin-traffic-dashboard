@@ -26,11 +26,9 @@ data/processed/
 *.csv.gz
 *.parquet
 *.xlsx
-data/road_kpi_snapshots/
-src/data/road_kpi_snapshots/
 scripts/cache/
-scr/
-scripts/
+# scr/
+# scripts/
 data/
 test/
 .venv/

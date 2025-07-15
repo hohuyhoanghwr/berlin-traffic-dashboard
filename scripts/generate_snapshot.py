@@ -18,15 +18,6 @@ try:
     db = client[DB_NAME]
     collection = db[COLLECTION_NAME]
     print(f"Connected to MongoDB: {MONGO_URI}, Database: {DB_NAME}, Collection: {COLLECTION_NAME}")
-
-    # Optional: Clear existing data before inserting new snapshots
-    # This is useful during development to ensure a clean slate
-    collection.delete_many({})
-    print(f"Cleared existing data in collection: {COLLECTION_NAME}")
-
-    # # Try creating a simple index first
-    # collection.create_index("timestamp")
-    # print("Created index on timestamp.")
     
     # Create indexes for efficient querying
     collection.create_index([
@@ -43,10 +34,6 @@ except Exception as e:
 
 # Paths relative to project root
 DATA_PATH = os.path.join(ROOT_DIR,"src","data", "processed", "kpi_enriched_dec_2024.parquet")
-SAVE_DIR = "data/road_kpi_snapshots"
-
-# Create output directory if not exists
-# os.makedirs(SAVE_DIR, exist_ok=True)
 
 # Load data and generate timestamp
 df = pd.read_parquet(DATA_PATH)
