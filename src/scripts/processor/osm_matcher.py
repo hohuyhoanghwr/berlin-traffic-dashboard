@@ -6,7 +6,13 @@ from shapely.geometry import Point
 
 
 class StreetMatcher:
-    def __init__(self, network_place="Berlin, Germany", cache_path="data/osm/berlin_drive.graphml"):
+    def __init__(self, network_place="Berlin, Germany", cache_path=None):
+        if cache_path is None:
+            # Always resolve path relative to the project root
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            cache_path = os.path.abspath(
+                os.path.join(script_dir, "..", "..", "data", "osm", "berlin_drive.graphml")
+            )
         self.network_place = network_place
         self.cache_path = cache_path
         self.osm_edges = None
@@ -33,7 +39,7 @@ class StreetMatcher:
         )
         return gdf
 
-    def match_detectors_to_segments(self, df_enriched: pd.DataFrame, kpi_col: str = "q_kfz_det_hr") -> gpd.GeoDataFrame:
+    def match_detectors_to_segments(self, df_enriched: pd.DataFrame) -> gpd.GeoDataFrame:
         if self.osm_edges is None:
             self.load_osm_network()
 
@@ -72,14 +78,16 @@ class StreetMatcher:
         
         # Keep only relevant columns and rename geometry
         gdf_road_kpi = gdf_road_kpi.rename(columns={'geometry_road_segment': 'geometry'})
-        gdf_road_kpi = gdf_road_kpi[["geometry","name_road_segment", kpi_col]].copy()
+        gdf_road_kpi = gdf_road_kpi[["geometry","name_road_segment"] + [col for col in df_enriched.columns if col.startswith(('q_', 'v_'))]].copy()
         gdf_road_kpi = gdf_road_kpi.to_crs("EPSG:4326")  # Back to WGS84
 
         # Return in original CRS for compatibility with Folium (WGS84)
         return gdf_road_kpi
 
-    def aggregate_kpi_by_osm_segment(self, gdf_matched: gpd.GeoDataFrame, kpi_col: str = "q_kfz_det_hr") -> gpd.GeoDataFrame:
+    def aggregate_kpi_by_osm_segment(self, gdf_matched: gpd.GeoDataFrame, kpi_col: str) -> gpd.GeoDataFrame:
+        if kpi_col not in gdf_matched.columns:
+            raise ValueError(f"KPI column '{kpi_col}' not found in the matched GeoDataFrame for aggregation.")
         grouped = gdf_matched.groupby(["geometry","name_road_segment"])[kpi_col].mean().reset_index()
         grouped_gdf = gpd.GeoDataFrame(grouped, geometry="geometry", crs="EPSG:4326")
-        grouped_gdf = grouped_gdf.rename(columns={kpi_col: f"{kpi_col}_avg"})
+        grouped_gdf = grouped_gdf.rename(columns={kpi_col: "value"})
         return grouped_gdf

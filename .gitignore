@@ -19,23 +19,7 @@ src/streamlit_app/data/
 Thumbs.db
 .vscode/
 .idea/
-
-# Pip tools
-# requirements.txt
-requirements.in
-
-# Data
-# data/raw/
-src/data/raw/2024/*.gz      
-src/data/raw/2024/*.csv     
-src/data/road_kpi_snapshots/
-src/data/osm/berlin_drive.graphml
-src/data/raw/*.xlsx
-data/processed/
-*.parquet
-*.xlsx
-*.csv
-
+.venv/
 
 # Logs / caches
 *.log
@@ -43,7 +27,4 @@ data/processed/
 *.db
 .cache/
 test/cache/
-
-# Docker specific
-*.dockerignore
-Dockerfile.bak
+scripts/cache/
