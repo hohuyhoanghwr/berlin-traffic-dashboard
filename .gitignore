@@ -12,7 +12,6 @@ venv/
 # Streamlit
 .streamlit/secrets.toml
 src/streamlit_app/.cache/
-src/streamlit_app/data/
 
 # OS & IDEs
 .DS_Store
@@ -26,5 +25,4 @@ Thumbs.db
 *.sqlite
 *.db
 .cache/
-test/cache/
 scripts/cache/
